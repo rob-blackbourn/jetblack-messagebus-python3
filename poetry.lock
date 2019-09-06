@@ -1,0 +1,14 @@
+[[package]]
+category = "dev"
+description = "Asynchronous console and interfaces for asyncio"
+name = "aioconsole"
+optional = false
+python-versions = "*"
+version = "0.1.15"
+
+[metadata]
+content-hash = "e391cb33acff09c25fea3cbe5c99b293adc7e3022540e7ad8ed4b7a00e626aa4"
+python-versions = "^3.7"
+
+[metadata.hashes]
+aioconsole = ["498e567805b74c1ecf4501d28e48727e8e77af8d6a0b8f1b7aa9a4842e02743d"]
