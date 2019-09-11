@@ -131,15 +131,16 @@ class UnicastData(Message):
 
     @classmethod
     async def read_body(cls, reader: DataReader) -> UnicastData:
-        uuid = await reader.read_uuid()
+        client_id = await reader.read_uuid()
         feed = await reader.read_string()
         topic = await reader.read_string()
         is_image = await reader.read_boolean()
         data_packets = await reader.read_data_packet_array()
-        return UnicastData(uuid, feed, topic, is_image, data_packets)
+        return UnicastData(client_id, feed, topic, is_image, data_packets)
 
     async def write(self, writer: DataWriter) -> None:
         self.write_header(writer)
+        writer.write_uuid(self.client_id)
         writer.write_string(self.feed)
         writer.write_string(self.topic)
         writer.write_boolean(self.is_image)
