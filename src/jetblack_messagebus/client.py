@@ -23,6 +23,7 @@ from .messages import (
     ForwardedUnicastData
 )
 from .authentication import Authenticator
+from .utils import read_aiter
 
 LOGGER = logging.getLogger(__name__)
 
@@ -66,38 +67,17 @@ class Client(metaclass=ABCMeta):
         if self._monitor_heartbeat:
             await self.add_subscription('__admin__', 'heartbeat')
 
-        token_task = asyncio.create_task(self._token.wait())
-        read_task = asyncio.create_task(Message.read(self._reader))
-
-        pending = {
-            token_task,
-            read_task
-        }
-
-        while not self._token.is_set():
-
-            LOGGER.debug('Waiting for event')
-            done, pending = await asyncio.wait(pending, return_when=asyncio.FIRST_COMPLETED)
-
-            for task in done:
-                if task == token_task:
-                    LOGGER.debug('Exiting loop')
-                elif task == read_task:
-                    message: Message = task.result()
-
-                    if message.message_type == MessageType.AUTHORIZATION_REQUEST:
-                        await self._raise_authorization_request(message)
-                    elif message.message_type == MessageType.FORWARDED_MULTICAST_DATA:
-                        await self._raise_multicast_data(message)
-                    elif message.message_type == MessageType.FORWARDED_UNICAST_DATA:
-                        await self._raise_unicast_data(message)
-                    elif message.message_type == MessageType.FORWARDED_SUBSCRIPTION_REQUEST:
-                        await self._raise_forwarded_subscription_request(message)
-                    else:
-                        raise RuntimeError(f'Invalid message type {message.message_type}')
-
-                    read_task = asyncio.create_task(Message.read(self._reader))
-                    pending.add(read_task)
+        async for message in read_aiter(self._read_message, self._token):
+            if message.message_type == MessageType.AUTHORIZATION_REQUEST:
+                await self._raise_authorization_request(message)
+            elif message.message_type == MessageType.FORWARDED_MULTICAST_DATA:
+                await self._raise_multicast_data(message)
+            elif message.message_type == MessageType.FORWARDED_UNICAST_DATA:
+                await self._raise_unicast_data(message)
+            elif message.message_type == MessageType.FORWARDED_SUBSCRIPTION_REQUEST:
+                await self._raise_forwarded_subscription_request(message)
+            else:
+                raise RuntimeError(f'Invalid message type {message.message_type}')
 
         LOGGER.info('Done')
 
@@ -105,6 +85,9 @@ class Client(metaclass=ABCMeta):
     def stop(self):
         """Stop handling messages"""
         self._token.set()
+
+    async def _read_message(self) -> Message:
+        return await Message.read(self._reader)
 
     async def _raise_authorization_request(self, message: AuthorizationRequest) -> None:
         await self.on_authorization(
