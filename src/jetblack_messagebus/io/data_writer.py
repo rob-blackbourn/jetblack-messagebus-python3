@@ -73,12 +73,14 @@ class DataWriter:
         self.writer.write(buf)
 
 
-    def write_string(self, val: str, encoding: str = 'utf-8') -> None:
+    def write_string(self, val: Optional[str], encoding: str = 'utf-8') -> None:
         """Write a string"""
-        buf = struct.pack('>i', len(val))
-        self.writer.write(buf)
-        buf = val.encode(encoding)
-        self.writer.write(buf)
+        if val is None:
+            self.write_int(0)
+        else:
+            self.write_int(len(val))
+            buf = val.encode(encoding)
+            self.writer.write(buf)
 
     def write_byte_array(self, val: Optional[bytes]) -> None:
         """Write a byte array"""
