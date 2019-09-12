@@ -1,6 +1,14 @@
 # jetblack-messagebus-python3
 
-A Python3 client for the [jetblack-messagebus](https://github.com/rob-blackbourn/jetblack-messagebus).
+
+## Overview
+
+This is a Python 3.7+ client for the [jetblack-messagebus](https://github.com/rob-blackbourn/jetblack-messagebus).
+
+It follows the publish-subscribe pattern, and includes support for "notification" of
+a subscription by another client. This allows it to provide data on-demand.
+
+See the server documentation for more detailed information.
 
 ## Example
 
@@ -142,7 +150,7 @@ client.data_handlers.remove(on_data)
 
 The data packets have two fields: `entitlements` and `data`.
 
-The `entitlements` is a set of ints which express the entitlements that were
+The `entitlements` is a optional set of ints which express the entitlements that were
 required for the data to have been received.
 
 The `data` is an optional `bytes` holding the encoded data. What this represents
@@ -151,7 +159,7 @@ JSON text, or a protocol buffer.
 
 ### Subscription notifications
 
-A subscription notiification handler looks like this:
+A subscription notification handler looks like this:
 
 ```python
 # A notification handler.
