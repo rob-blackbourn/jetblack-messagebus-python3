@@ -85,7 +85,7 @@ async def main():
 ### JWT
 
 JWT authentication requires a valid token to be passed by the client. This
-is provided by the tokne authenticator.
+is provided by the token authenticator.
 
 ```python
 import ssl
@@ -115,7 +115,7 @@ There are three types of messages that can be received:
 
 - Data
 - Subscription notifications
-- Authorisation requests.
+- Authorization requests.
 
 ### Data
 
@@ -138,7 +138,7 @@ async def on_data(
 client.data_handlers.append(on_data)
 # Remove the handler
 client.data_handlers.remove(on_data)
-``
+```
 
 The data packets have two fields: `entitlements` and `data`.
 
