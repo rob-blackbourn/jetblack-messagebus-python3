@@ -3,6 +3,7 @@
 from __future__ import annotations
 from abc import ABCMeta, abstractmethod
 import asyncio
+from asyncio import Queue
 import logging
 from typing import Optional, Set, List
 from ssl import SSLContext
@@ -41,6 +42,8 @@ class Client(metaclass=ABCMeta):
         self._writer = writer
         self._authenticator = authenticator
         self._monitor_heartbeat = monitor_heartbeat
+        self._read_queue: Queue = asyncio.Queue()
+        self._write_queue: Queue = asyncio.Queue()
         self._token = asyncio.Event()
 
     @classmethod
@@ -67,7 +70,7 @@ class Client(metaclass=ABCMeta):
         if self._monitor_heartbeat:
             await self.add_subscription('__admin__', 'heartbeat')
 
-        async for message in read_aiter(self._read_message, self._token):
+        async for message in read_aiter(self._read, self._write, self._dequeue, self._token):
             if message.message_type == MessageType.AUTHORIZATION_REQUEST:
                 await self._raise_authorization_request(message)
             elif message.message_type == MessageType.FORWARDED_MULTICAST_DATA:
@@ -175,8 +178,15 @@ class Client(metaclass=ABCMeta):
             entitlements: Optional[Set[int]]
     ) -> None:
         """Send an authorization response"""
-        msg = AuthorizationResponse(client_id, feed, topic, is_authorization_required, entitlements)
-        await msg.write(self._writer)
+        await self._write_queue.put(
+            AuthorizationResponse(
+                client_id,
+                feed,
+                topic,
+                is_authorization_required,
+                entitlements
+            )
+        )
 
     async def publish(
             self,
@@ -186,8 +196,14 @@ class Client(metaclass=ABCMeta):
             data_packets: Optional[List[DataPacket]]
     ) -> None:
         """Publish data to subscribers"""
-        msg = MulticastData(feed, topic, is_image, data_packets)
-        await msg.write(self._writer)
+        await self._write_queue.put(
+            MulticastData(
+                feed,
+                topic,
+                is_image,
+                data_packets
+            )
+        )
 
     async def send(
             self,
@@ -198,29 +214,65 @@ class Client(metaclass=ABCMeta):
             data_packets: Optional[List[DataPacket]]
     ) -> None:
         """Send data to a client"""
-        msg = UnicastData(client_id, feed, topic, is_image, data_packets)
-        await msg.write(self._writer)
+        await self._write_queue.put(
+            UnicastData(
+                client_id,
+                feed,
+                topic,
+                is_image,
+                data_packets
+            )
+        )
 
 
     async def add_subscription(self, feed: str, topic: str) -> None:
         """Add a subscription"""
-        msg = SubscriptionRequest(feed, topic, True)
-        await msg.write(self._writer)
+        await self._write_queue.put(
+            SubscriptionRequest(
+                feed,
+                topic,
+                True
+            )
+        )
 
 
     async def remove_subscription(self, feed: str, topic: str) -> None:
         """Remove a subscription"""
-        msg = SubscriptionRequest(feed, topic, False)
-        await msg.write(self._writer)
+        await self._write_queue.put(
+            SubscriptionRequest(
+                feed,
+                topic,
+                False
+            )
+        )
 
 
     async def add_notification(self, feed: str) -> None:
         """Add a notification"""
-        msg = NotificationRequest(feed, True)
-        await msg.write(self._writer)
+        await self._write_queue.put(
+            NotificationRequest(
+                feed,
+                True
+            )
+        )
 
 
     async def remove_notification(self, feed: str) -> None:
         """Remove a notification"""
-        msg = NotificationRequest(feed, False)
-        await msg.write(self._writer)
+        await self._write_queue.put(
+            NotificationRequest(
+                feed,
+                False
+            )
+        )
+
+    async def _read(self) -> None:
+        message = await Message.read(self._reader)
+        await self._read_queue.put(message)
+
+    async def _dequeue(self) -> Message:
+        return await self._read_queue.get()
+
+    async def _write(self):
+        message = await self._write_queue.get()
+        await message.write(self._writer)

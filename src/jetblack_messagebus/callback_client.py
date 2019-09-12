@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 import asyncio
+from asyncio import Queue
 import logging
 from typing import Optional, Set, List, Callable, Awaitable
 from ssl import SSLContext
@@ -26,9 +27,19 @@ from .utils import read_aiter
 
 LOGGER = logging.getLogger(__name__)
 
-AuthorizationHandler = Callable[[UUID, str, str, str, str], Awaitable[None]]
-DataHandler = Callable[[str, str, str, str, Optional[List[DataPacket]], bool], Awaitable[None]]
-NotificationHandler = Callable[[UUID, str, str, str, str, bool], Awaitable[None]]
+AuthorizationHandler = Callable[
+    [UUID, str, str, str, str],
+    Awaitable[None]
+]
+DataHandler = Callable[
+    [str, str, str, str, Optional[List[DataPacket]], bool],
+    Awaitable[None]
+]
+NotificationHandler = Callable[
+    [UUID, str, str, str, str, bool],
+    Awaitable[None]
+]
+
 
 class CallbackClient():
     """Feedbus client"""
@@ -47,6 +58,8 @@ class CallbackClient():
         self._authorization_handlers: List[AuthorizationHandler] = list()
         self._data_handlers: List[DataHandler] = list()
         self._notification_handlers: List[NotificationHandler] = list()
+        self._read_queue: Queue = asyncio.Queue()
+        self._write_queue: Queue = asyncio.Queue()
         self._token = asyncio.Event()
 
     @property
@@ -91,7 +104,6 @@ class CallbackClient():
         reader, writer = await asyncio.open_connection(host, port, ssl=ssl)
         return cls(DataReader(reader), DataWriter(writer), authenticator, monitor_heartbeat)
 
-
     async def start(self):
         """Start handling messages"""
 
@@ -101,7 +113,7 @@ class CallbackClient():
         if self._monitor_heartbeat:
             await self.add_subscription('__admin__', 'heartbeat')
 
-        async for message in read_aiter(self._read_message, self._token):
+        async for message in read_aiter(self._read, self._write, self._dequeue, self._token):
             if message.message_type == MessageType.AUTHORIZATION_REQUEST:
                 await self._raise_authorization_request(message)
             elif message.message_type == MessageType.FORWARDED_MULTICAST_DATA:
@@ -111,17 +123,14 @@ class CallbackClient():
             elif message.message_type == MessageType.FORWARDED_SUBSCRIPTION_REQUEST:
                 await self._raise_forwarded_subscription_request(message)
             else:
-                raise RuntimeError(f'Invalid message type {message.message_type}')
+                raise RuntimeError(
+                    f'Invalid message type {message.message_type}')
 
         LOGGER.info('Done')
-
 
     def stop(self):
         """Stop handling messages"""
         self._token.set()
-
-    async def _read_message(self) -> Message:
-        return await Message.read(self._reader)
 
     async def _raise_authorization_request(self, message: AuthorizationRequest) -> None:
         for handler in self._authorization_handlers:
@@ -178,8 +187,15 @@ class CallbackClient():
             entitlements: Optional[Set[int]]
     ) -> None:
         """Send an authorization response"""
-        msg = AuthorizationResponse(client_id, feed, topic, is_authorization_required, entitlements)
-        await msg.write(self._writer)
+        await self._write_queue.put(
+            AuthorizationResponse(
+                client_id,
+                feed,
+                topic,
+                is_authorization_required,
+                entitlements
+            )
+        )
 
     async def publish(
             self,
@@ -189,8 +205,14 @@ class CallbackClient():
             data_packets: Optional[List[DataPacket]]
     ) -> None:
         """Publish data to subscribers"""
-        msg = MulticastData(feed, topic, is_image, data_packets)
-        await msg.write(self._writer)
+        await self._write_queue.put(
+            MulticastData(
+                feed,
+                topic,
+                is_image,
+                data_packets
+            )
+        )
 
     async def send(
             self,
@@ -201,29 +223,61 @@ class CallbackClient():
             data_packets: Optional[List[DataPacket]]
     ) -> None:
         """Send data to a client"""
-        msg = UnicastData(client_id, feed, topic, is_image, data_packets)
-        await msg.write(self._writer)
-
+        await self._write_queue.put(
+            UnicastData(
+                client_id,
+                feed,
+                topic,
+                is_image,
+                data_packets
+            )
+        )
 
     async def add_subscription(self, feed: str, topic: str) -> None:
         """Add a subscription"""
-        msg = SubscriptionRequest(feed, topic, True)
-        await msg.write(self._writer)
-
+        await self._write_queue.put(
+            SubscriptionRequest(
+                feed,
+                topic,
+                True
+            )
+        )
 
     async def remove_subscription(self, feed: str, topic: str) -> None:
         """Remove a subscription"""
-        msg = SubscriptionRequest(feed, topic, False)
-        await msg.write(self._writer)
-
+        await self._write_queue.put(
+            SubscriptionRequest(
+                feed,
+                topic,
+                False
+            )
+        )
 
     async def add_notification(self, feed: str) -> None:
         """Add a notification"""
-        msg = NotificationRequest(feed, True)
-        await msg.write(self._writer)
-
+        await self._write_queue.put(
+            NotificationRequest(
+                feed,
+                True
+            )
+        )
 
     async def remove_notification(self, feed: str) -> None:
         """Remove a notification"""
-        msg = NotificationRequest(feed, False)
-        await msg.write(self._writer)
+        await self._write_queue.put(
+            NotificationRequest(
+                feed,
+                False
+            )
+        )
+
+    async def _read(self) -> None:
+        message = await Message.read(self._reader)
+        await self._read_queue.put(message)
+
+    async def _dequeue(self) -> Message:
+        return await self._read_queue.get()
+
+    async def _write(self):
+        message = await self._write_queue.get()
+        await message.write(self._writer)
