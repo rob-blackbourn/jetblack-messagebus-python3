@@ -3,6 +3,8 @@
 import asyncio
 from uuid import UUID
 
+from aioconsole import ainput, aprint
+
 from jetblack_messagebus import CallbackClient
 
 async def on_notification(
@@ -18,10 +20,12 @@ async def on_notification(
 
 async def main():
     """Start the demo"""
+    await aprint('Example notifier')
+    feed = await ainput('Feed: ')
     client = await CallbackClient.create('localhost', 9091)
     client.notification_handlers.append(on_notification)
-    print("Requesting notification of subscriptions on feed 'TEST'")
-    await client.add_notification('TEST')
+    await aprint(f"Requesting notification of subscriptions on feed '{feed}'")
+    await client.add_notification(feed)
     await client.start()
 
 if __name__ == '__main__':

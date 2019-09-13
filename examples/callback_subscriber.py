@@ -3,6 +3,7 @@
 import asyncio
 from typing import Optional, List
 
+from aioconsole import ainput, aprint
 from jetblack_messagebus import CallbackClient, DataPacket
 
 async def on_data(
@@ -24,10 +25,13 @@ async def on_data(
 
 async def main():
     """Start the demo"""
+    await aprint('Example subscriber')
+    feed = await ainput('Feed: ')
+    topic = await ainput('Topic: ')
     client = await CallbackClient.create('localhost', 9091)
     client.data_handlers.append(on_data)
-    print("Subscribing on feed 'TEST' to topic 'FOO'")
-    await client.add_subscription('TEST', 'FOO')
+    await aprint(f"Subscribing on feed '{feed}' to topic '{topic}'")
+    await client.add_subscription(feed, topic)
     await client.start()
 
 if __name__ == '__main__':
