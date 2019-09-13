@@ -26,6 +26,7 @@ async def main():
     """Start the demo"""
     client = await CallbackClient.create('localhost', 9091)
     client.data_handlers.append(on_data)
+    print("Subscribing on feed 'TEST' to topic 'FOO'")
     await client.add_subscription('TEST', 'FOO')
     await client.start()
 

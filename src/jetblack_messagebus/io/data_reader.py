@@ -76,8 +76,7 @@ class DataReader:
 
     async def read_string(self, encoding: str = 'utf-8') -> str:
         """Read a string"""
-        buf = await self.reader.readexactly(4)
-        utf_len = struct.unpack('>i', buf)[0]
+        utf_len = await self.read_int()
         buf = await self.reader.readexactly(utf_len)
         return buf.decode(encoding)
 
@@ -86,12 +85,12 @@ class DataReader:
         count = await self.read_int()
         if count == 0:
             return None
-        data = await self.reader.readexactly(count)
-        return data
+        buf = await self.reader.readexactly(count)
+        return buf
 
     async def read_uuid(self) -> UUID:
         """Read a UUID"""
-        buf = await self.reader.readexactly(32)
+        buf = await self.reader.readexactly(16)
         return UUID(bytes_le=buf)
 
 
