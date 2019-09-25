@@ -75,11 +75,11 @@ class CallbackClient(Client):
 
     async def on_authorization(
             self,
-            client_id,
-            host,
-            user,
-            feed,
-            topic
+            client_id: UUID,
+            host: str,
+            user: str,
+            feed: str,
+            topic: str
     ) -> None:
         for handler in self._authorization_handlers:
             await handler(
@@ -92,12 +92,12 @@ class CallbackClient(Client):
 
     async def on_data(
             self,
-            user,
-            host,
-            feed,
-            topic,
-            data_packets,
-            is_image
+            user: str,
+            host: str,
+            feed: str,
+            topic: str,
+            data_packets: Optional[List[DataPacket]],
+            is_image: bool
     ) -> None:
         for handler in self._data_handlers:
             await handler(
@@ -111,12 +111,12 @@ class CallbackClient(Client):
 
     async def on_forwarded_subscription_request(
             self,
-            client_id,
-            user,
-            host,
-            feed,
-            topic,
-            is_add
+            client_id: UUID,
+            user: str,
+            host: str,
+            feed: str,
+            topic: str,
+            is_add: bool
     ):
         for handler in self._notification_handlers:
             await handler(
