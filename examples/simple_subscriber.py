@@ -30,7 +30,8 @@ class SimpleSubscriber(Client):
     ) -> None:
         print(f'data: user="{user}",host="{host}",feed="{feed}",topic="{topic}"')
         if not data_packets:
-            print("no data")
+            print("no data - closing")
+            self.stop()
         else:
             for packet in data_packets:
                 message = packet.data.decode('utf8') if packet.data else None
@@ -46,6 +47,9 @@ class SimpleSubscriber(Client):
             is_add: bool
     ) -> None:
         print(f'notification: client_id={client_id},user={user},host={host}, feed={feed},topic={topic},is_add={is_add}')
+
+    async def on_closed(self, is_faulted):
+        print(f'closed: is_faulted={is_faulted}')
 
 async def main():
     client = await SimpleSubscriber.create('localhost', 9001)

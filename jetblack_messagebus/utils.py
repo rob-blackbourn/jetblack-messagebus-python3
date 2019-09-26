@@ -1,6 +1,13 @@
 """Utilities"""
 
-from asyncio import Event, Future, create_task, wait, FIRST_COMPLETED
+from asyncio import (
+    Event,
+    Future,
+    create_task,
+    wait,
+    FIRST_COMPLETED,
+    CancelledError
+)
 from typing import AsyncIterator, Set, Callable, Awaitable, TypeVar
 
 # pylint: disable=invalid-name
@@ -25,12 +32,20 @@ async def read_aiter(
     pending.add(write_task)
     pending.add(dequeue_task)
 
-    while not cancellation_event.is_set():
+    is_faulted = False
+
+    while not (cancellation_event.is_set() or is_faulted):
         done, pending = await wait(pending, return_when=FIRST_COMPLETED)
         for task in done:
+
             if task == cancellation_task:
                 break
-            elif task == read_task:
+
+            if task.exception() is not None:
+                is_faulted = True
+                break
+
+            if task == read_task:
                 read_task = create_task(read())
                 pending.add(read_task)
             elif task == write_task:
@@ -43,5 +58,8 @@ async def read_aiter(
 
 
     for task in pending:
-        task.cancel()
-        await task
+        try:
+            task.cancel()
+            await task
+        except CancelledError:
+            pass

@@ -124,3 +124,11 @@ class DataWriter:
     async def drain(self) -> None:
         """Drain the writer"""
         await self.writer.drain()
+
+    async def close(self) -> None:
+        """Close the connection"""
+        if self.writer.can_write_eof():
+            self.writer.write_eof()
+            await self.writer.drain()
+        self.writer.close()
+        await self.writer.wait_closed()

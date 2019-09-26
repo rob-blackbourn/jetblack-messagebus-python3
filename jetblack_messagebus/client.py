@@ -82,6 +82,12 @@ class Client(metaclass=ABCMeta):
             else:
                 raise RuntimeError(f'Invalid message type {message.message_type}')
 
+        is_faulted = not self._token.is_set()
+        if not is_faulted:
+            await self._writer.close()
+
+        await self.on_closed(is_faulted)
+
         LOGGER.info('Done')
 
 
@@ -168,6 +174,14 @@ class Client(metaclass=ABCMeta):
             is_add: bool
     ) -> None:
         """Called for a notification"""
+
+    @abstractmethod
+    async def on_closed(self, is_faulted) -> None:
+        """Called when the connection has been closed
+
+        :param is_faulted: If true the connection was closed by the server
+        :type is_faulted: bool
+        """
 
     async def authorize(
             self,

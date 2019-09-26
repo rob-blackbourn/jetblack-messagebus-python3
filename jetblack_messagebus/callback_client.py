@@ -25,6 +25,10 @@ NotificationHandler = Callable[
     [UUID, str, str, str, str, bool],
     Awaitable[None]
 ]
+ClosedHandler = Callable[
+    [bool],
+    Awaitable[None]
+]
 
 
 class CallbackClient(Client):
@@ -41,6 +45,7 @@ class CallbackClient(Client):
         self._authorization_handlers: List[AuthorizationHandler] = list()
         self._data_handlers: List[DataHandler] = list()
         self._notification_handlers: List[NotificationHandler] = list()
+        self._closed_handlers: List[ClosedHandler] = list()
         self._read_queue: Queue = asyncio.Queue()
         self._write_queue: Queue = asyncio.Queue()
         self._token = asyncio.Event()
@@ -72,6 +77,15 @@ class CallbackClient(Client):
         :rtype: List[NotificationHandler]
         """
         return self._notification_handlers
+
+    @property
+    def closed_handlers(self) -> List[ClosedHandler]:
+        """The list of handlers called when a connection is closed
+
+        :return: The list of handlers
+        :rtype: List[ClosedHandler]
+        """
+        return self._closed_handlers
 
     async def on_authorization(
             self,
@@ -127,3 +141,7 @@ class CallbackClient(Client):
                 topic,
                 is_add
             )
+
+    async def on_closed(self, is_faulted):
+        for handler in self._closed_handlers:
+            await handler(is_faulted)
