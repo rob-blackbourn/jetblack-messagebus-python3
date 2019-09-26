@@ -30,7 +30,7 @@ async def on_data(user, host, feed, topic, data_packets, is_image):
             print(f'packet: entitlements={packet.entitlements},message={message}')
 
 async def main():
-    client = await CallbackClient.create('localhost', 9091)
+    client = await CallbackClient.create('localhost', 9001)
     client.data_handlers.append(on_data)
     await client.add_subscription('TEST', 'FOO')
     await client.start()
@@ -52,7 +52,7 @@ from jetblack_messagebus import CallbackClient
 async def main():
     """Start the demo"""
     ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-    client = await CallbackClient.create('myhost.example.com', 9091, ssl=ssl_context)
+    client = await CallbackClient.create('myhost.example.com', 9001, ssl=ssl_context)
     await client.add_subscription('TEST', 'FOO')
     await client.start()
 ```
@@ -82,7 +82,7 @@ async def main():
     ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
     client = await CallbackClient.create(
         'myhost.example.com',
-        9091,
+        9001,
         ssl=ssl_context,
         authenticator=authenticator
     )
@@ -109,7 +109,7 @@ async def main():
     ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
     client = await CallbackClient.create(
         'myhost.example.com',
-        9091,
+        9001,
         ssl=ssl_context,
         authenticator=authenticator
     )

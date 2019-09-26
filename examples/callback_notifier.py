@@ -22,7 +22,7 @@ async def main():
     """Start the demo"""
     await aprint('Example notifier')
     feed = await ainput('Feed: ')
-    client = await CallbackClient.create('localhost', 9091)
+    client = await CallbackClient.create('localhost', 9001)
     client.notification_handlers.append(on_notification)
     await aprint(f"Requesting notification of subscriptions on feed '{feed}'")
     await client.add_notification(feed)

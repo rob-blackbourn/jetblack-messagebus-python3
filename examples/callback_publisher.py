@@ -11,7 +11,7 @@ async def main():
     feed = await ainput('Feed: ')
     topic = await ainput('Topic: ')
 
-    client = await CallbackClient.create('localhost', 9091)
+    client = await CallbackClient.create('localhost', 9001)
 
     console_task = asyncio.create_task(ainput('Message: '))
     client_task = asyncio.create_task(client.start())

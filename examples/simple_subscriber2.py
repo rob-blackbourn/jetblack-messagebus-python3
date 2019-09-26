@@ -50,7 +50,7 @@ class SimpleSubscriber(Client):
         print(f'notification: client_id={client_id},user={user},host={host}, feed={feed},topic={topic},is_add={is_add}')
 
 async def main():
-    client = await SimpleSubscriber.create('localhost', 9091)
+    client = await SimpleSubscriber.create('localhost', 9001)
 
     prompt = 'Enter feed and topic (e.g. LSE SBRY)\n'
     console_task = asyncio.create_task(ainput(prompt))

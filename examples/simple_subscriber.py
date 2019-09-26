@@ -48,7 +48,7 @@ class SimpleSubscriber(Client):
         print(f'notification: client_id={client_id},user={user},host={host}, feed={feed},topic={topic},is_add={is_add}')
 
 async def main():
-    client = await SimpleSubscriber.create('localhost', 9091)
+    client = await SimpleSubscriber.create('localhost', 9001)
     await client.add_subscription('TEST', 'FOO')
     await client.start()
 

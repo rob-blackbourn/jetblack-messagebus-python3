@@ -28,7 +28,7 @@ async def main():
     await aprint('Example subscriber')
     feed = await ainput('Feed: ')
     topic = await ainput('Topic: ')
-    client = await CallbackClient.create('localhost', 9091)
+    client = await CallbackClient.create('localhost', 9001)
     client.data_handlers.append(on_data)
     await aprint(f"Subscribing on feed '{feed}' to topic '{topic}'")
     await client.add_subscription(feed, topic)

@@ -39,7 +39,7 @@ async def main():
 
     ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
     authenticator = BasicAuthenticator(username, password)
-    client = await CallbackClient.create('localhost', 9091, ssl=ssl_context, authenticator=authenticator)
+    client = await CallbackClient.create('localhost', 9001, ssl=ssl_context, authenticator=authenticator)
 
     print('starting the client')
     console_task = asyncio.create_task(read_console())

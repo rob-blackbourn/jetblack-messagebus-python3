@@ -36,7 +36,7 @@ async def main():
 
     authenticator = BasicAuthenticator(username, password)
     ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-    client = await CallbackClient.create('localhost', 9091, ssl=ssl_context, authenticator=authenticator)
+    client = await CallbackClient.create('localhost', 9001, ssl=ssl_context, authenticator=authenticator)
 
     print(f"Requesting notification of subscriptions on feed '{feed}'")
     client.notification_handlers.append(on_notification)

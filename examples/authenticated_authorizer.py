@@ -55,7 +55,7 @@ async def main():
     authenticator = BasicAuthenticator(username, password)
 
     ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-    client = await Authorizer.create('localhost', 9091, ssl=ssl_context, authenticator=authenticator)
+    client = await Authorizer.create('localhost', 9001, ssl=ssl_context, authenticator=authenticator)
 
     print('Starting the authenticator')
     await client.start()
