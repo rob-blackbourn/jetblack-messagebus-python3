@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "jetblack-messagebus-python3"
-version = "4.0.0"
+version = "4.1.0"
 description = "A python3 client for jetblack-messagebus"
 authors = ["Rob Blackbourn <rob.blackbourn@googlemail.com>"]
 readme = "README.md"
