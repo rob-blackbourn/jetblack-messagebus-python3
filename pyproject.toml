@@ -6,7 +6,7 @@ authors = ["Rob Blackbourn <rob.blackbourn@googlemail.com>"]
 readme = "README.md"
 repository = "https://github.com/rob-blackbourn/jetblack-messagebus-python3"
 packages = [
-    { include = "jetblack_messagebus", from = "src" },
+    { include = "jetblack_messagebus" },
 ]
 license = "Apache-2.0"
 
