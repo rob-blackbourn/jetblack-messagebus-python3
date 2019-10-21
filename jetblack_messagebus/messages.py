@@ -64,7 +64,7 @@ class Message(metaclass=ABCMeta):
 
     @abstractmethod
     def write_body(self, writer: DataWriter) -> None:
-        """Write the message"""
+        """Write the message body"""
 
     async def write(self, writer: DataWriter) -> None:
         """Write the message"""
