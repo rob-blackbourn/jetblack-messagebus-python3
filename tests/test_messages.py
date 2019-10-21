@@ -121,8 +121,6 @@ async def test_authorization_request():
         uuid.UUID('12345678123456781234567812345678'),
         'host',
         'user',
-        None,
-        None,
         'feed',
         'topic'
     )

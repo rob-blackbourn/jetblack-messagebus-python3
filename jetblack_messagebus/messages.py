@@ -362,8 +362,6 @@ class AuthorizationRequest(Message):
             client_id: UUID,
             host: str,
             user: str,
-            forwarded_for: Optional[str],
-            impersonating: Optional[str],
             feed: str,
             topic: str
     ) -> None:
@@ -371,8 +369,6 @@ class AuthorizationRequest(Message):
         self.client_id = client_id
         self.host = host
         self.user = user
-        self.forwarded_for = forwarded_for
-        self.impersonating = impersonating
         self.feed = feed
         self.topic = topic
 
@@ -381,30 +377,24 @@ class AuthorizationRequest(Message):
         client_id = await reader.read_uuid()
         host = await reader.read_string()
         user = await reader.read_string()
-        forwarded_for = await reader.read_nullable_string()
-        impersonating = await reader.read_nullable_string()
         feed = await reader.read_string()
         topic = await reader.read_string()
-        return AuthorizationRequest(client_id, host, user, forwarded_for, impersonating, feed, topic)
+        return AuthorizationRequest(client_id, host, user, feed, topic)
 
     async def write(self, writer: DataWriter) -> None:
         self.write_header(writer)
         writer.write_uuid(self.client_id)
         writer.write_string(self.host)
         writer.write_string(self.user)
-        writer.write_string(self.forwarded_for)
-        writer.write_string(self.impersonating)
         writer.write_string(self.feed)
         writer.write_string(self.topic)
         await writer.drain()
 
     def __str__(self):
-        return 'AuthorizationRequest(client_id={},host="{}",user="{}",forwarded_for="{}",impersonating="{}",feed="{}",topic="{}"'.format(
+        return 'AuthorizationRequest(client_id={},host="{}",user="{}",feed="{}",topic="{}"'.format(
             self.client_id,
             self.host,
             self.user,
-            self.forwarded_for,
-            self.impersonating,
             self.feed,
             self.topic
         )
@@ -421,8 +411,6 @@ class AuthorizationRequest(Message):
             self.client_id == value.client_id and
             self.host == value.host and
             self.user == value.user and
-            self.forwarded_for == value.forwarded_for and
-            self.impersonating == value.impersonating and
             self.feed == value.feed and
             self.topic == value.topic
         )
