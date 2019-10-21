@@ -63,8 +63,15 @@ class Message(metaclass=ABCMeta):
         writer.write_byte(self.message_type.value)
 
     @abstractmethod
+    def write_body(self, writer: DataWriter) -> None:
+        """Write the message"""
+
     async def write(self, writer: DataWriter) -> None:
         """Write the message"""
+        self.write_header(writer)
+        self.write_body(writer)
+        await writer.drain()
+
 
     @abstractclassmethod
     async def read_body(cls, reader: DataReader) -> Message:
@@ -94,13 +101,11 @@ class MulticastData(Message):
         data_packets = await reader.read_data_packet_array()
         return MulticastData(feed, topic, is_image, data_packets)
 
-    async def write(self, writer: DataWriter) -> None:
-        self.write_header(writer)
+    def write_body(self, writer: DataWriter) -> None:
         writer.write_string(self.feed)
         writer.write_string(self.topic)
         writer.write_boolean(self.is_image)
         writer.write_data_packet_array(self.data_packets)
-        await writer.drain()
 
     def __str__(self) -> str:
         return 'MulticastData(feed="{}",topic="{}",is_image={},data_packets={})'.format(
@@ -157,14 +162,12 @@ class UnicastData(Message):
         data_packets = await reader.read_data_packet_array()
         return UnicastData(client_id, feed, topic, is_image, data_packets)
 
-    async def write(self, writer: DataWriter) -> None:
-        self.write_header(writer)
+    def write_body(self, writer: DataWriter) -> None:
         writer.write_uuid(self.client_id)
         writer.write_string(self.feed)
         writer.write_string(self.topic)
         writer.write_boolean(self.is_image)
         writer.write_data_packet_array(self.data_packets)
-        await writer.drain()
 
     def __str__(self) -> str:
         return 'UnicastData(client_id={},feed="{}",topic="{}",is_image={},data_packets={})'.format(
@@ -224,15 +227,13 @@ class ForwardedSubscriptionRequest(Message):
         is_add = await reader.read_boolean()
         return ForwardedSubscriptionRequest(user, host, client_id, feed, topic, is_add)
 
-    async def write(self, writer: DataWriter) -> None:
-        self.write_header(writer)
+    def write_body(self, writer: DataWriter) -> None:
         writer.write_string(self.user)
         writer.write_string(self.host)
         writer.write_uuid(self.client_id)
         writer.write_string(self.feed)
         writer.write_string(self.topic)
         writer.write_boolean(self.is_add)
-        await writer.drain()
 
     def __str__(self) -> str:
         # pylint: disable=line-too-long
@@ -279,11 +280,9 @@ class NotificationRequest(Message):
         is_add = await reader.read_boolean()
         return NotificationRequest(feed, is_add)
 
-    async def write(self, writer: DataWriter) -> None:
-        self.write_header(writer)
+    def write_body(self, writer: DataWriter) -> None:
         writer.write_string(self.feed)
         writer.write_boolean(self.is_add)
-        await writer.drain()
 
     def __str__(self) -> str:
         return 'NotificationRequest(feed="{}",is_add={})'.format(
@@ -323,12 +322,10 @@ class SubscriptionRequest(Message):
         is_add = await reader.read_boolean()
         return SubscriptionRequest(feed, topic, is_add)
 
-    async def write(self, writer: DataWriter) -> None:
-        self.write_header(writer)
+    def write_body(self, writer: DataWriter) -> None:
         writer.write_string(self.feed)
         writer.write_string(self.topic)
         writer.write_boolean(self.is_add)
-        await writer.drain()
 
     def __str__(self) -> str:
         return 'SubscriptionRequest(feed="{}",topic="{}",is_add={})'.format(
@@ -381,14 +378,12 @@ class AuthorizationRequest(Message):
         topic = await reader.read_string()
         return AuthorizationRequest(client_id, host, user, feed, topic)
 
-    async def write(self, writer: DataWriter) -> None:
-        self.write_header(writer)
+    def write_body(self, writer: DataWriter) -> None:
         writer.write_uuid(self.client_id)
         writer.write_string(self.host)
         writer.write_string(self.user)
         writer.write_string(self.feed)
         writer.write_string(self.topic)
-        await writer.drain()
 
     def __str__(self):
         return 'AuthorizationRequest(client_id={},host="{}",user="{}",feed="{}",topic="{}"'.format(
@@ -451,14 +446,12 @@ class AuthorizationResponse(Message):
             entitlements
         )
 
-    async def write(self, writer: DataWriter) -> None:
-        self.write_header(writer)
+    def write_body(self, writer: DataWriter) -> None:
         writer.write_uuid(self.client_id)
         writer.write_string(self.feed)
         writer.write_string(self.topic)
         writer.write_boolean(self.is_authorization_required)
         writer.write_int_set(self.entitlements)
-        await writer.drain()
 
     def __str__(self):
         # pylint: disable=line-too-long
@@ -519,15 +512,13 @@ class ForwardedMulticastData(Message):
         data_packets = await reader.read_data_packet_array()
         return ForwardedMulticastData(user, host, feed, topic, is_image, data_packets)
 
-    async def write(self, writer: DataWriter) -> None:
-        self.write_header(writer)
+    def write_body(self, writer: DataWriter) -> None:
         writer.write_string(self.user)
         writer.write_string(self.host)
         writer.write_string(self.feed)
         writer.write_string(self.topic)
         writer.write_boolean(self.is_image)
         writer.write_data_packet_array(self.data_packets)
-        await writer.drain()
 
     def __str__(self):
         # pylint: disable=line-too-long
@@ -593,8 +584,7 @@ class ForwardedUnicastData(Message):
         data_packets = await reader.read_data_packet_array()
         return ForwardedUnicastData(user, host, client_id, feed, topic, is_image, data_packets)
 
-    async def write(self, writer: DataWriter) -> None:
-        self.write_header(writer)
+    def write_body(self, writer: DataWriter) -> None:
         writer.write_string(self.user)
         writer.write_string(self.host)
         writer.write_uuid(self.client_id)
@@ -602,7 +592,6 @@ class ForwardedUnicastData(Message):
         writer.write_string(self.topic)
         writer.write_boolean(self.is_image)
         writer.write_data_packet_array(self.data_packets)
-        await writer.drain()
 
     def __str__(self):
         # pylint: disable=line-too-long

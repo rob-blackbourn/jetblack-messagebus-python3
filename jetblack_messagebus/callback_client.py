@@ -14,7 +14,7 @@ from .authentication import Authenticator
 LOGGER = logging.getLogger(__name__)
 
 AuthorizationHandler = Callable[
-    [UUID, str, str, Optional[str], Optional[str], str, str],
+    [UUID, str, str, str, str],
     Awaitable[None]
 ]
 DataHandler = Callable[
@@ -92,8 +92,6 @@ class CallbackClient(Client):
             client_id: UUID,
             host: str,
             user: str,
-            forwarded_for: Optional[str],
-            impersonating: Optional[str],
             feed: str,
             topic: str
     ) -> None:
@@ -102,8 +100,6 @@ class CallbackClient(Client):
                 client_id,
                 host,
                 user,
-                forwarded_for,
-                impersonating,
                 feed,
                 topic
             )
