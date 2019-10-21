@@ -3,7 +3,7 @@
 from __future__ import annotations
 from abc import ABCMeta, abstractmethod, abstractclassmethod
 from enum import Enum
-from typing import Optional, Set, List
+from typing import Optional, Set, List, Any
 from uuid import UUID
 from .io import DataReader, DataWriter, DataPacket
 
@@ -110,6 +110,25 @@ class MulticastData(Message):
             self.data_packets
         )
 
+    def equals(self, value: MulticastData) -> bool:
+        """Check equality
+        
+        :param value: The value to check against
+        :type value: MulticastData
+        :return: True if the value is equal to self; otherwise False.
+        :rtype: bool
+        """
+        return (
+            isinstance(value, MulticastData) and
+            self.feed == value.feed and
+            self.topic == value.topic and
+            self.is_image == value.is_image
+            and self.data_packets == value.data_packets
+        )
+
+    def __eq__(self, value: Any) -> bool:
+        return isinstance(value, MulticastData) and self.equals(value)
+
 class UnicastData(Message):
     """A unicast data messsage"""
 
@@ -155,6 +174,25 @@ class UnicastData(Message):
             self.is_image,
             self.data_packets
         )
+
+    def equals(self, value: UnicastData) -> bool:
+        """Check equality
+        
+        :param value: The value to check against
+        :type value: MulticastData
+        :return: True if the value is equal to self; otherwise False.
+        :rtype: bool
+        """
+        return (
+            self.client_id == value.client_id and
+            self.feed == value.feed and
+            self.topic == value.topic and
+            self.is_image == value.is_image and
+            self.data_packets == value.data_packets
+        )
+
+    def __eq__(self, value: Any) -> bool:
+        return isinstance(value, UnicastData) and self.equals(value)
 
 class ForwardedSubscriptionRequest(Message):
     """A forwarded subscription request"""
@@ -207,6 +245,26 @@ class ForwardedSubscriptionRequest(Message):
             self.is_add
         )
 
+    def equals(self, value: ForwardedSubscriptionRequest) -> bool:
+        """Check equality
+        
+        :param value: The value to check against
+        :type value: MulticastData
+        :return: True if the value is equal to self; otherwise False.
+        :rtype: bool
+        """
+        return (
+            self.user == value.user and
+            self.host == value.host and
+            self.client_id == value.client_id and
+            self.feed == value.feed and
+            self.topic == value.topic and
+            self.is_add == value.is_add
+        )
+
+    def __eq__(self, value: Any) -> bool:
+        return isinstance(value, ForwardedSubscriptionRequest) and self.equals(value)
+
 class NotificationRequest(Message):
     """A notification request message"""
 
@@ -232,6 +290,22 @@ class NotificationRequest(Message):
             self.feed,
             self.is_add
         )
+
+    def equals(self, value: NotificationRequest) -> bool:
+        """Check equality
+        
+        :param value: The value to check against
+        :type value: MulticastData
+        :return: True if the value is equal to self; otherwise False.
+        :rtype: bool
+        """
+        return (
+            self.feed == value.feed and
+            self.is_add == value.is_add
+        )
+
+    def __eq__(self, value):
+        return isinstance(value, NotificationRequest) and self.equals(value)
 
 class SubscriptionRequest(Message):
     """A subscription request message"""
@@ -263,14 +337,42 @@ class SubscriptionRequest(Message):
             self.is_add
         )
 
+    def equals(self, value: SubscriptionRequest) -> bool:
+        """Check equality
+        
+        :param value: The value to check against
+        :type value: MulticastData
+        :return: True if the value is equal to self; otherwise False.
+        :rtype: bool
+        """
+        return (
+            self.feed == value.feed and
+            self.topic == value.topic and
+            self.is_add == value.is_add
+        )
+
+    def __eq__(self, value: Any) -> bool:
+        return isinstance(value, SubscriptionRequest) and self.equals(value)
+
 class AuthorizationRequest(Message):
     """An authorization request message"""
 
-    def __init__(self, client_id: UUID, host: str, user: str, feed: str, topic: str) -> None:
+    def __init__(
+            self,
+            client_id: UUID,
+            host: str,
+            user: str,
+            forwarded_for: Optional[str],
+            impersonating: Optional[str],
+            feed: str,
+            topic: str
+    ) -> None:
         super().__init__(MessageType.AUTHORIZATION_REQUEST)
         self.client_id = client_id
         self.host = host
         self.user = user
+        self.forwarded_for = forwarded_for
+        self.impersonating = impersonating
         self.feed = feed
         self.topic = topic
 
@@ -279,27 +381,54 @@ class AuthorizationRequest(Message):
         client_id = await reader.read_uuid()
         host = await reader.read_string()
         user = await reader.read_string()
+        forwarded_for = await reader.read_nullable_string()
+        impersonating = await reader.read_nullable_string()
         feed = await reader.read_string()
         topic = await reader.read_string()
-        return AuthorizationRequest(client_id, host, user, feed, topic)
+        return AuthorizationRequest(client_id, host, user, forwarded_for, impersonating, feed, topic)
 
     async def write(self, writer: DataWriter) -> None:
         self.write_header(writer)
         writer.write_uuid(self.client_id)
         writer.write_string(self.host)
         writer.write_string(self.user)
+        writer.write_string(self.forwarded_for)
+        writer.write_string(self.impersonating)
         writer.write_string(self.feed)
         writer.write_string(self.topic)
         await writer.drain()
 
     def __str__(self):
-        return 'AuthorizationRequest(client_id={},host="{}",user="{}",feed="{}",topic="{}"'.format(
+        return 'AuthorizationRequest(client_id={},host="{}",user="{}",forwarded_for="{}",impersonating="{}",feed="{}",topic="{}"'.format(
             self.client_id,
             self.host,
             self.user,
+            self.forwarded_for,
+            self.impersonating,
             self.feed,
             self.topic
         )
+
+    def equals(self, value: AuthorizationRequest) -> bool:
+        """Check equality
+        
+        :param value: The value to check against
+        :type value: MulticastData
+        :return: True if the value is equal to self; otherwise False.
+        :rtype: bool
+        """
+        return (
+            self.client_id == value.client_id and
+            self.host == value.host and
+            self.user == value.user and
+            self.forwarded_for == value.forwarded_for and
+            self.impersonating == value.impersonating and
+            self.feed == value.feed and
+            self.topic == value.topic
+        )
+
+    def __eq__(self, value):
+        return isinstance(value, AuthorizationRequest) and self.equals(value)
 
 class AuthorizationResponse(Message):
     """An authorization response"""
@@ -353,6 +482,25 @@ class AuthorizationResponse(Message):
             self.entitlements
         )
 
+    def equals(self, value: AuthorizationResponse) -> bool:
+        """Check equality
+        
+        :param value: The value to check against
+        :type value: MulticastData
+        :return: True if the value is equal to self; otherwise False.
+        :rtype: bool
+        """
+        return (
+            self.client_id == value.client_id and
+            self.feed == value.feed and
+            self.topic == value.topic and
+            self.is_authorization_required == value.is_authorization_required and
+            self.entitlements == value.entitlements
+        )
+
+    def __eq__(self, value: Any) -> bool:
+        return isinstance(value, AuthorizationResponse) and self.equals(value)
+
 class ForwardedMulticastData(Message):
     """A forwarded multicast data message"""
 
@@ -384,6 +532,7 @@ class ForwardedMulticastData(Message):
         return ForwardedMulticastData(user, host, feed, topic, is_image, data_packets)
 
     async def write(self, writer: DataWriter) -> None:
+        self.write_header(writer)
         writer.write_string(self.user)
         writer.write_string(self.host)
         writer.write_string(self.feed)
@@ -403,6 +552,26 @@ class ForwardedMulticastData(Message):
             self.data_packets
         )
 
+    def equals(self, value: ForwardedMulticastData) -> bool:
+        """Check equality
+        
+        :param value: The value to check against
+        :type value: MulticastData
+        :return: True if the value is equal to self; otherwise False.
+        :rtype: bool
+        """
+        return (
+            self.user == value.user and
+            self.host == value.host and
+            self.feed == value.feed and
+            self.topic == value.topic and
+            self.is_image == value.is_image and
+            self.data_packets == value.data_packets
+        )
+
+    def __eq__(self, value: Any) -> bool:
+        return isinstance(value, ForwardedMulticastData) and self.equals(value)
+
 class ForwardedUnicastData(Message):
     """A forwarded unicast message"""
 
@@ -416,7 +585,7 @@ class ForwardedUnicastData(Message):
             is_image: bool,
             data_packets: Optional[List[DataPacket]]
     ):
-        super().__init__(MessageType.FORWARDED_MULTICAST_DATA)
+        super().__init__(MessageType.FORWARDED_UNICAST_DATA)
         self.user = user
         self.host = host
         self.client_id = client_id
@@ -437,6 +606,7 @@ class ForwardedUnicastData(Message):
         return ForwardedUnicastData(user, host, client_id, feed, topic, is_image, data_packets)
 
     async def write(self, writer: DataWriter) -> None:
+        self.write_header(writer)
         writer.write_string(self.user)
         writer.write_string(self.host)
         writer.write_uuid(self.client_id)
@@ -457,3 +627,24 @@ class ForwardedUnicastData(Message):
             self.is_image,
             self.data_packets
         )
+
+    def equals(self, value: ForwardedUnicastData) -> bool:
+        """Check equality
+        
+        :param value: The value to check against
+        :type value: MulticastData
+        :return: True if the value is equal to self; otherwise False.
+        :rtype: bool
+        """
+        return (
+            self.user == value.user and
+            self.host == value.host and
+            self.client_id == value.client_id and
+            self.feed == value.feed and
+            self.topic == value.topic and
+            self.is_image == value.is_image and
+            self.data_packets == value.data_packets
+        )
+
+    def __eq__(self, value: Any) -> bool:
+        return isinstance(value, ForwardedUnicastData) and self.equals(value)

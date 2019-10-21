@@ -15,3 +15,10 @@ class DataPacket:
 
     def __repr__(self):
         return f'DataPacket({self.entitlements}, {self.data})'
+
+    def __eq__(self, value):
+        return (
+            isinstance(value, DataPacket) and
+            self.entitlements == value.entitlements and
+            self.data == value.data
+        )

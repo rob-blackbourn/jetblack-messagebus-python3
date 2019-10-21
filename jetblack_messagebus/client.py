@@ -103,6 +103,8 @@ class Client(metaclass=ABCMeta):
             message.client_id,
             message.host,
             message.user,
+            message.forwarded_for,
+            message.impersonating,
             message.feed,
             message.topic
         )
@@ -113,6 +115,8 @@ class Client(metaclass=ABCMeta):
             client_id: UUID,
             host: str,
             user: str,
+            forwarded_for: Optional[str],
+            impersonating: Optional[str],
             feed: str,
             topic: str
     ) -> None:

@@ -76,8 +76,17 @@ class DataReader:
 
     async def read_string(self, encoding: str = 'utf-8') -> str:
         """Read a string"""
-        utf_len = await self.read_int()
-        buf = await self.reader.readexactly(utf_len)
+        count = await self.read_int()
+        buf = await self.reader.readexactly(count)
+        return buf.decode(encoding)
+
+
+    async def read_nullable_string(self, encoding: str = 'utf-8') -> Optional[str]:
+        """Read a string"""
+        count = await self.read_int()
+        if count == 0:
+            return None
+        buf = await self.reader.readexactly(count)
         return buf.decode(encoding)
 
     async def read_byte_array(self) -> Optional[bytes]:
