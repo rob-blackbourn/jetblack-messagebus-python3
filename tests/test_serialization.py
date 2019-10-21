@@ -20,11 +20,9 @@ async def test_roundtrip():
     data_writer.write_uuid(uuid.UUID('12345678123456781234567812345678'))
     stream_reader = MockStreamReader(stream_writer.buf)
     data_reader = DataReader(stream_reader)
-    assert await data_reader.read_boolean() == True
-    assert await data_reader.read_boolean() == False
+    assert await data_reader.read_boolean()
+    assert not await data_reader.read_boolean()
     assert await data_reader.read_byte() == 32
     assert await data_reader.read_int() == 42
     assert await data_reader.read_string() == 'This is not a test'
     assert await data_reader.read_uuid() == uuid.UUID('12345678123456781234567812345678')
-    print("Done")    
-

@@ -117,7 +117,7 @@ class MulticastData(Message):
 
     def equals(self, value: MulticastData) -> bool:
         """Check equality
-        
+
         :param value: The value to check against
         :type value: MulticastData
         :return: True if the value is equal to self; otherwise False.
@@ -180,7 +180,7 @@ class UnicastData(Message):
 
     def equals(self, value: UnicastData) -> bool:
         """Check equality
-        
+
         :param value: The value to check against
         :type value: MulticastData
         :return: True if the value is equal to self; otherwise False.
@@ -248,7 +248,7 @@ class ForwardedSubscriptionRequest(Message):
 
     def equals(self, value: ForwardedSubscriptionRequest) -> bool:
         """Check equality
-        
+
         :param value: The value to check against
         :type value: MulticastData
         :return: True if the value is equal to self; otherwise False.
@@ -292,7 +292,7 @@ class NotificationRequest(Message):
 
     def equals(self, value: NotificationRequest) -> bool:
         """Check equality
-        
+
         :param value: The value to check against
         :type value: MulticastData
         :return: True if the value is equal to self; otherwise False.
@@ -336,7 +336,7 @@ class SubscriptionRequest(Message):
 
     def equals(self, value: SubscriptionRequest) -> bool:
         """Check equality
-        
+
         :param value: The value to check against
         :type value: MulticastData
         :return: True if the value is equal to self; otherwise False.
@@ -396,7 +396,7 @@ class AuthorizationRequest(Message):
 
     def equals(self, value: AuthorizationRequest) -> bool:
         """Check equality
-        
+
         :param value: The value to check against
         :type value: MulticastData
         :return: True if the value is equal to self; otherwise False.
@@ -465,7 +465,7 @@ class AuthorizationResponse(Message):
 
     def equals(self, value: AuthorizationResponse) -> bool:
         """Check equality
-        
+
         :param value: The value to check against
         :type value: MulticastData
         :return: True if the value is equal to self; otherwise False.
@@ -533,7 +533,7 @@ class ForwardedMulticastData(Message):
 
     def equals(self, value: ForwardedMulticastData) -> bool:
         """Check equality
-        
+
         :param value: The value to check against
         :type value: MulticastData
         :return: True if the value is equal to self; otherwise False.
@@ -607,7 +607,7 @@ class ForwardedUnicastData(Message):
 
     def equals(self, value: ForwardedUnicastData) -> bool:
         """Check equality
-        
+
         :param value: The value to check against
         :type value: MulticastData
         :return: True if the value is equal to self; otherwise False.

@@ -30,7 +30,7 @@ async def test_multicast_data():
         'feed',
         'topic',
         True,
-            [
+        [
             DataPacket({1, 2}, b'first'),
             DataPacket(None, b'second'),
         ]
@@ -51,7 +51,7 @@ async def test_unicast_data():
         'feed',
         'topic',
         True,
-            [
+        [
             DataPacket({1, 2}, b'first'),
             DataPacket(None, b'second'),
         ]
@@ -159,7 +159,7 @@ async def test_forwarded_multicast_data():
         'feed',
         'topic',
         True,
-            [
+        [
             DataPacket({1, 2}, b'first'),
             DataPacket(None, b'second'),
         ]
@@ -182,7 +182,7 @@ async def test_forwarded_unicast_data():
         'feed',
         'topic',
         True,
-            [
+        [
             DataPacket({1, 2}, b'first'),
             DataPacket(None, b'second'),
         ]
