@@ -7,6 +7,7 @@ from uuid import UUID
 
 from jetblack_messagebus import CallbackClient, BasicAuthenticator
 
+
 class Authorizer(CallbackClient):
     """Create a subsclass to gain access to the authorize method"""
 
@@ -23,8 +24,9 @@ class Authorizer(CallbackClient):
             topic: str
     ) -> None:
         """Called when authorization is requested"""
-        
-        print(f'on_authorization: client_id={client_id},host={host},user={user},feed={feed},topic={topic}')
+
+        print(
+            f'on_authorization: client_id={client_id},host={host},user={user},feed={feed},topic={topic}')
 
         entitlements: Optional[Set[int]] = None
 
@@ -36,7 +38,7 @@ class Authorizer(CallbackClient):
             await self.authorize(client_id, feed, topic, True, {1})
 
         print(f'{user} can see {entitlements}')
-        await self.authorize(client_id, feed, topic, True, entitlements);
+        await self.authorize(client_id, feed, topic, True, entitlements)
 
 
 async def main():

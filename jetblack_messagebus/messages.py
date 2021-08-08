@@ -1,7 +1,7 @@
 """Messages"""
 
 from __future__ import annotations
-from abc import ABCMeta, abstractmethod, abstractclassmethod
+from abc import ABCMeta, abstractmethod
 from enum import Enum
 from typing import Optional, Set, List, Any
 from uuid import UUID
@@ -95,7 +95,8 @@ class Message(metaclass=ABCMeta):
         self.write_body(writer)
         await writer.drain()
 
-    @abstractclassmethod
+    @classmethod
+    @abstractmethod
     async def read_body(cls, reader: DataReader) -> Message:
         """Read message the body
 
