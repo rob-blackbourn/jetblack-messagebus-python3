@@ -40,7 +40,7 @@ class CallbackClient(Client):
             writer: DataWriter,
             authenticator: Optional[Authenticator],
             monitor_heartbeat: bool
-    ):
+    ) -> None:
         super().__init__(reader, writer, authenticator, monitor_heartbeat)
         self._authorization_handlers: List[AuthorizationHandler] = list()
         self._data_handlers: List[DataHandler] = list()
@@ -52,11 +52,11 @@ class CallbackClient(Client):
 
     @property
     def authorization_handlers(self) -> List[AuthorizationHandler]:
-        """The list of handlers called when an authorization request is
+        """The handlers called when an authorization request is
         received.
 
-        :return: The list of handlers
-        :rtype: List[AuthorizationHandler]
+        Returns:
+            List[AuthorizationHandler]: The list of handlers
         """
         return self._authorization_handlers
 
@@ -64,8 +64,8 @@ class CallbackClient(Client):
     def data_handlers(self) -> List[DataHandler]:
         """The list of handlers called when data is received.
 
-        :return: The list of handlers
-        :rtype: List[DataHandler]
+        Returns:
+            List[DataHandler]: The list of handlers
         """
         return self._data_handlers
 
@@ -73,8 +73,8 @@ class CallbackClient(Client):
     def notification_handlers(self) -> List[NotificationHandler]:
         """The list of handlers called when a notification is received
 
-        :return: The list of handlers
-        :rtype: List[NotificationHandler]
+        Returns:
+            List[NotificationHandler]: The list of handlers
         """
         return self._notification_handlers
 
@@ -82,8 +82,8 @@ class CallbackClient(Client):
     def closed_handlers(self) -> List[ClosedHandler]:
         """The list of handlers called when a connection is closed
 
-        :return: The list of handlers
-        :rtype: List[ClosedHandler]
+        Returns:
+            List[ClosedHandler]: The list of handlers
         """
         return self._closed_handlers
 
@@ -131,7 +131,7 @@ class CallbackClient(Client):
             feed: str,
             topic: str,
             is_add: bool
-    ):
+    ) -> None:
         for handler in self._notification_handlers:
             await handler(
                 client_id,
@@ -142,6 +142,6 @@ class CallbackClient(Client):
                 is_add
             )
 
-    async def on_closed(self, is_faulted):
+    async def on_closed(self, is_faulted: bool) -> None:
         for handler in self._closed_handlers:
             await handler(is_faulted)

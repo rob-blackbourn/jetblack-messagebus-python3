@@ -11,7 +11,7 @@ class DataPacket:
         self.data = data
 
     def __str__(self) -> str:
-        return f'entitlements={self.entitlements},data={self.data}'
+        return f'entitlements={self.entitlements},data={self.data!r}'
 
     def __repr__(self):
         return f'DataPacket({self.entitlements}, {self.data})'
