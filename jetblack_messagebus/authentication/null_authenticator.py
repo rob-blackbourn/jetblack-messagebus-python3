@@ -2,7 +2,7 @@
 
 from ..io import DataReader, DataWriter
 
-from .types import Authenticator
+from .authenticator import Authenticator
 
 
 class NullAuthenticator(Authenticator):

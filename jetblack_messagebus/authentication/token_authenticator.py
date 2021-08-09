@@ -18,7 +18,7 @@ class TokenAuthenticator(ConnectionStringAuthenticator):
         super().__init__(impersonating, forwarded_for, application)
         self.token = token
 
-    def to_connection_string(self) -> Optional[str]:
+    def to_connection_string(self) -> str:
         connection_string = f'Token={self.token}'
         if self.impersonating:
             connection_string += f';Impersonating={self.impersonating}'

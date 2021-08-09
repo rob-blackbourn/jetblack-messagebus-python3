@@ -6,7 +6,7 @@ from .connection_string_authenticator import ConnectionStringAuthenticator
 
 
 class BasicAuthenticator(ConnectionStringAuthenticator):
-    """Basic Authenticator"""
+    """A client authenticator which uses usernames and passwords."""
 
     def __init__(
             self,
@@ -16,6 +16,15 @@ class BasicAuthenticator(ConnectionStringAuthenticator):
             forwarded_for: Optional[str] = None,
             application: Optional[str] = None
     ) -> None:
+        """Initialise the authenticator.
+
+        Args:
+            username (str): The username.
+            password (str): The password.
+            impersonating (Optional[str], optional): For a proxy, the user that is being impersonated. Defaults to None.
+            forwarded_for (Optional[str], optional): For a proxy, the host on which the actual client is situated. Defaults to None.
+            application (Optional[str], optional): The name of the application. Defaults to None.
+        """
         super().__init__(impersonating, forwarded_for, application)
         self.username = username
         self.password = password
