@@ -2,12 +2,10 @@
 
 from typing import Optional
 
-from ..io import DataReader, DataWriter
-
-from .types import Authenticator
+from .connection_string_authenticator import ConnectionStringAuthenticator
 
 
-class TokenAuthenticator(Authenticator):
+class TokenAuthenticator(ConnectionStringAuthenticator):
     """Token Authenticator"""
 
     def __init__(
@@ -17,12 +15,10 @@ class TokenAuthenticator(Authenticator):
             forwarded_for: Optional[str] = None,
             application: Optional[str] = None
     ) -> None:
+        super().__init__(impersonating, forwarded_for, application)
         self.token = token
-        self.impersonating = impersonating
-        self.forwarded_for = forwarded_for
-        self.application = application
 
-    async def authenticate(self, reader: DataReader, writer: DataWriter) -> None:
+    def to_connection_string(self) -> str:
         connection_string = f'Token={self.token}'
         if self.impersonating:
             connection_string += f';Impersonating={self.impersonating}'
@@ -30,5 +26,4 @@ class TokenAuthenticator(Authenticator):
             connection_string += f';ForwardedFor={self.forwarded_for}'
         if self.application:
             connection_string += f';Application={self.application}'
-        writer.write_string(connection_string)
-        await writer.drain()
+        return connection_string

@@ -5,7 +5,7 @@ from abc import ABCMeta, abstractmethod
 import asyncio
 from asyncio import Queue
 import logging
-from typing import Optional, Set, List
+from typing import Optional, Set, List, cast
 from ssl import SSLContext
 from uuid import UUID
 
@@ -27,6 +27,7 @@ from .authentication import Authenticator
 from .utils import read_aiter
 
 LOGGER = logging.getLogger(__name__)
+
 
 class Client(metaclass=ABCMeta):
     """Feedbus client"""
@@ -56,12 +57,22 @@ class Client(metaclass=ABCMeta):
             ssl: Optional[SSLContext] = None,
             monitor_heartbeat: bool = False
     ) -> Client:
-        """Create the client"""
+        """Create the client
+
+        Args:
+            host (str): The host name of the distributor.
+            port (int): The distributor port
+            authenticator (Optional[Authenticator], optional): An authenticator. Defaults to None.
+            ssl (Optional[SSLContext], optional): The context for an ssl connection. Defaults to None.
+            monitor_heartbeat (bool, optional): If true use the monitor heartbeat. Defaults to False.
+
+        Returns:
+            Client: The connected client.
+        """
         reader, writer = await asyncio.open_connection(host, port, ssl=ssl)
         return cls(DataReader(reader), DataWriter(writer), authenticator, monitor_heartbeat)
 
-
-    async def start(self):
+    async def start(self) -> None:
         """Start handling messages"""
 
         if self._authenticator:
@@ -72,15 +83,24 @@ class Client(metaclass=ABCMeta):
 
         async for message in read_aiter(self._read, self._write, self._dequeue, self._token):
             if message.message_type == MessageType.AUTHORIZATION_REQUEST:
-                await self._raise_authorization_request(message)
+                await self._raise_authorization_request(
+                    cast(AuthorizationRequest, message)
+                )
             elif message.message_type == MessageType.FORWARDED_MULTICAST_DATA:
-                await self._raise_multicast_data(message)
+                await self._raise_multicast_data(
+                    cast(ForwardedMulticastData, message)
+                )
             elif message.message_type == MessageType.FORWARDED_UNICAST_DATA:
-                await self._raise_unicast_data(message)
+                await self._raise_unicast_data(
+                    cast(ForwardedUnicastData, message)
+                )
             elif message.message_type == MessageType.FORWARDED_SUBSCRIPTION_REQUEST:
-                await self._raise_forwarded_subscription_request(message)
+                await self._raise_forwarded_subscription_request(
+                    cast(ForwardedSubscriptionRequest, message)
+                )
             else:
-                raise RuntimeError(f'Invalid message type {message.message_type}')
+                raise RuntimeError(
+                    f'Invalid message type {message.message_type}')
 
         is_faulted = not self._token.is_set()
         if not is_faulted:
@@ -90,15 +110,17 @@ class Client(metaclass=ABCMeta):
 
         LOGGER.info('Done')
 
-
-    def stop(self):
+    def stop(self) -> None:
         """Stop handling messages"""
         self._token.set()
 
     async def _read_message(self) -> Message:
         return await Message.read(self._reader)
 
-    async def _raise_authorization_request(self, message: AuthorizationRequest) -> None:
+    async def _raise_authorization_request(
+            self,
+            message: AuthorizationRequest
+    ) -> None:
         await self.on_authorization(
             message.client_id,
             message.host,
@@ -118,7 +140,10 @@ class Client(metaclass=ABCMeta):
     ) -> None:
         """Called when authorization is requested"""
 
-    async def _raise_multicast_data(self, message: ForwardedMulticastData) -> None:
+    async def _raise_multicast_data(
+            self,
+            message: ForwardedMulticastData
+    ) -> None:
         await self.on_data(
             message.user,
             message.host,
@@ -128,7 +153,10 @@ class Client(metaclass=ABCMeta):
             message.is_image
         )
 
-    async def _raise_unicast_data(self, message: ForwardedUnicastData) -> None:
+    async def _raise_unicast_data(
+            self,
+            message: ForwardedUnicastData
+    ) -> None:
         await self.on_data(
             message.user,
             message.host,
@@ -148,7 +176,16 @@ class Client(metaclass=ABCMeta):
             data_packets: Optional[List[DataPacket]],
             is_image: bool
     ) -> None:
-        """Called when data is received"""
+        """Called when data is received
+
+        Args:
+            user (str): The user name of the sender.
+            host (str): The host from which the data was sent.
+            feed (str): The feed name.
+            topic (str): The topic name.
+            data_packets (Optional[List[DataPacket]]): The data packets.
+            is_image (bool): True if the data is considered an image.
+        """
 
     async def _raise_forwarded_subscription_request(
             self,
@@ -173,14 +210,23 @@ class Client(metaclass=ABCMeta):
             topic: str,
             is_add: bool
     ) -> None:
-        """Called for a notification"""
+        """Called for a notification.
+
+        Args:
+            client_id (UUID): An identifier for the client.
+            user (str): The name of the user that requested the subscription.
+            host (str): The host from which the subscription was requested.
+            feed (str): The feed name.
+            topic (str): The topic name.
+            is_add (bool): If true the request was to add a subscription.
+        """
 
     @abstractmethod
-    async def on_closed(self, is_faulted) -> None:
+    async def on_closed(self, is_faulted: bool) -> None:
         """Called when the connection has been closed
 
-        :param is_faulted: If true the connection was closed by the server
-        :type is_faulted: bool
+        Args:
+            is_faulted (bool): If true the connection was closed by the server
         """
 
     async def authorize(
@@ -191,7 +237,15 @@ class Client(metaclass=ABCMeta):
             is_authorization_required: bool,
             entitlements: Optional[Set[int]]
     ) -> None:
-        """Send an authorization response"""
+        """Send an authorization response.
+
+        Args:
+            client_id (UUID): An identifier for the client.
+            feed (str): The feed name.
+            topic (str): The topic name.
+            is_authorization_required (bool): If True, authorization is required.
+            entitlements (Optional[Set[int]]): The entitlements of the user.
+        """
         await self._write_queue.put(
             AuthorizationResponse(
                 client_id,
@@ -209,7 +263,14 @@ class Client(metaclass=ABCMeta):
             is_image: bool,
             data_packets: Optional[List[DataPacket]]
     ) -> None:
-        """Publish data to subscribers"""
+        """Publish data to subscribers
+
+        Args:
+            feed (str): The feed name.
+            topic (str): The topic name.
+            is_image (bool): If true the data is considered an image.
+            data_packets (Optional[List[DataPacket]]): Th data packets.
+        """
         await self._write_queue.put(
             MulticastData(
                 feed,
@@ -227,7 +288,15 @@ class Client(metaclass=ABCMeta):
             is_image: bool,
             data_packets: Optional[List[DataPacket]]
     ) -> None:
-        """Send data to a client"""
+        """Send data to a client
+
+        Args:
+            client_id (UUID): The clint id.
+            feed (str): The feed name.
+            topic (str): The topic name.
+            is_image (bool): If true the data is considered an image.
+            data_packets (Optional[List[DataPacket]]): Th data packets.
+        """
         await self._write_queue.put(
             UnicastData(
                 client_id,
@@ -238,9 +307,13 @@ class Client(metaclass=ABCMeta):
             )
         )
 
-
     async def add_subscription(self, feed: str, topic: str) -> None:
-        """Add a subscription"""
+        """Add a subscription
+
+        Args:
+            feed (str): The feed name.
+            topic (str): The topic name.
+        """
         await self._write_queue.put(
             SubscriptionRequest(
                 feed,
@@ -249,9 +322,13 @@ class Client(metaclass=ABCMeta):
             )
         )
 
-
     async def remove_subscription(self, feed: str, topic: str) -> None:
-        """Remove a subscription"""
+        """Remove a subscription
+
+        Args:
+            feed (str): The feed name.
+            topic (str): The topic name.
+        """
         await self._write_queue.put(
             SubscriptionRequest(
                 feed,
@@ -260,9 +337,12 @@ class Client(metaclass=ABCMeta):
             )
         )
 
-
     async def add_notification(self, feed: str) -> None:
-        """Add a notification"""
+        """Add a notification
+
+        Args:
+            feed (str): The feed name.
+        """
         await self._write_queue.put(
             NotificationRequest(
                 feed,
@@ -270,9 +350,12 @@ class Client(metaclass=ABCMeta):
             )
         )
 
-
     async def remove_notification(self, feed: str) -> None:
-        """Remove a notification"""
+        """Remove a notification
+
+        Args:
+            feed (str): The feed name.
+        """
         await self._write_queue.put(
             NotificationRequest(
                 feed,

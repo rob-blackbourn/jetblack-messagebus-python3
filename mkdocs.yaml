@@ -1,0 +1,37 @@
+site_name: jetblack-messagebus
+site_description: A python 3 client for the message bus
+site_dir: docs
+
+docs_dir: documentation
+
+repo_name: rob-blackbourn/jetblack-messagebus-python3
+repo_url: https://github.com/rob-blackbourn/jetblack-messagebus-python3
+edit_uri: ""
+
+theme:
+    name: "material"
+    logo: images/peach.svg
+    favicon: images/favicon.ico
+
+nav:
+    - index.md
+    - API:
+          - jetblack_messagebus: api/index.md
+
+markdown_extensions:
+    - admonition
+    - codehilite:
+          guess_lang: false
+    - jetblack_markdown.autodoc:
+          class_from_init: true
+          ignore_dunder: true
+          ignore_private: true
+          ignore_all: false
+          ignore_inherited: false
+          follow_module_tree: false
+          prefer_docstring: true
+    - toc:
+          permalink: true
+
+extra_css:
+    - css/custom.css

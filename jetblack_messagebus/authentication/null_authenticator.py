@@ -1,10 +1,12 @@
 """Null Authenticator"""
 
-from .types import Authenticator
+from ..io import DataReader, DataWriter
+
+from .authenticator import Authenticator
 
 
 class NullAuthenticator(Authenticator):
     """Null Authenticator"""
 
-    async def authenticate(self, reader, writer):
-        pass
+    async def authenticate(self, reader: DataReader, writer: DataWriter) -> None:
+        return
