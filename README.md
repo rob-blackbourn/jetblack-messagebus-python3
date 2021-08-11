@@ -1,6 +1,5 @@
 # jetblack-messagebus-python3
 
-
 ## Overview
 
 This is a Python 3.7+ client for the [jetblack-messagebus](https://github.com/rob-blackbourn/jetblack-messagebus).

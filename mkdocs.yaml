@@ -15,6 +15,10 @@ theme:
 
 nav:
     - index.md
+    - getting-started.md
+    - ssl.md
+    - authentication.md
+    - message-handlers.md
     - API:
           - jetblack_messagebus: api/index.md
 
