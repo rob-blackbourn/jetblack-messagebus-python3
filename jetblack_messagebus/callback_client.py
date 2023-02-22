@@ -18,7 +18,7 @@ AuthorizationHandler = Callable[
     Awaitable[None]
 ]
 DataHandler = Callable[
-    [str, str, str, str, Optional[List[DataPacket]], bool],
+    [str, str, str, str, Optional[List[DataPacket]], str],
     Awaitable[None]
 ]
 NotificationHandler = Callable[
@@ -111,7 +111,7 @@ class CallbackClient(Client):
             feed: str,
             topic: str,
             data_packets: Optional[List[DataPacket]],
-            is_image: bool
+            content_type: str
     ) -> None:
         for handler in self._data_handlers:
             await handler(
@@ -120,7 +120,7 @@ class CallbackClient(Client):
                 feed,
                 topic,
                 data_packets,
-                is_image
+                content_type
             )
 
     async def on_forwarded_subscription_request(
