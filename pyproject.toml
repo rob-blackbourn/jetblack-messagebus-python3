@@ -22,7 +22,7 @@ pytest-cov = "^2.8"
 pylint = "^2.9.6"
 mypy = "^0.910"
 autopep8 = "^1.5.7"
-mkdocs = "^1.0"
+mkdocs = "^1.2"
 mkdocs-material = "^4.6.0"
 jetblack-markdown = "^0.7"
 
