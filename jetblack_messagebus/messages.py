@@ -115,7 +115,7 @@ class MulticastData(Message):
             self,
             feed: str,
             topic: str,
-            is_image: bool,
+            content_type: str,
             data_packets: Optional[List[DataPacket]]
     ) -> None:
         """A multicast data message.
@@ -123,34 +123,34 @@ class MulticastData(Message):
         Args:
             feed (str): The feed name.
             topic (str): The topic name
-            is_image (bool): If true the data is an image.
+            content_type (str): The content type.
             data_packets (Optional[List[DataPacket]]): The data packets.
         """
         super().__init__(MessageType.MULTICAST_DATA)
         self.feed = feed
         self.topic = topic
-        self.is_image = is_image
+        self.content_type = content_type
         self.data_packets = data_packets
 
     @classmethod
     async def read_body(cls, reader: DataReader) -> MulticastData:
         feed = await reader.read_string()
         topic = await reader.read_string()
-        is_image = await reader.read_boolean()
+        content_type = await reader.read_string()
         data_packets = await reader.read_data_packet_array()
-        return MulticastData(feed, topic, is_image, data_packets)
+        return MulticastData(feed, topic, content_type, data_packets)
 
     def write_body(self, writer: DataWriter) -> None:
         writer.write_string(self.feed)
         writer.write_string(self.topic)
-        writer.write_boolean(self.is_image)
+        writer.write_string(self.content_type)
         writer.write_data_packet_array(self.data_packets)
 
     def __str__(self) -> str:
-        return 'MulticastData(feed="{}",topic="{}",is_image={},data_packets={})'.format(
+        return 'MulticastData(feed="{}",topic="{}",content_type={},data_packets={})'.format(
             self.feed,
             self.topic,
-            self.is_image,
+            self.content_type,
             self.data_packets
         )
 
@@ -159,36 +159,36 @@ class MulticastData(Message):
             isinstance(value, MulticastData) and
             self.feed == value.feed and
             self.topic == value.topic and
-            self.is_image == value.is_image
-            and self.data_packets == value.data_packets
+            self.content_type == value.content_type and
+            self.data_packets == value.data_packets
         )
 
 
 class UnicastData(Message):
-    """A unicast data messsage"""
+    """A unicast data message"""
 
     def __init__(
             self,
             client_id: UUID,
             feed: str,
             topic: str,
-            is_image: bool,
+            content_type: str,
             data_packets: Optional[List[DataPacket]]
     ) -> None:
         """A unicast data message.
 
         Args:
             client_id (UUID): The client identifier.
-            feed (str): The feed name
-            topic (str): Thee topic name
-            is_image (bool): True if the data is an image
-            data_packets (Optional[List[DataPacket]]): The data packets
+            feed (str): The feed name.
+            topic (str): Thee topic name.
+            content_type (str): The content type.
+            data_packets (Optional[List[DataPacket]]): The data packets.
         """
         super().__init__(MessageType.UNICAST_DATA)
         self.client_id = client_id
         self.feed = feed
         self.topic = topic
-        self.is_image = is_image
+        self.content_type = content_type
         self.data_packets = data_packets
 
     @classmethod
@@ -196,23 +196,23 @@ class UnicastData(Message):
         client_id = await reader.read_uuid()
         feed = await reader.read_string()
         topic = await reader.read_string()
-        is_image = await reader.read_boolean()
+        content_type = await reader.read_string()
         data_packets = await reader.read_data_packet_array()
-        return UnicastData(client_id, feed, topic, is_image, data_packets)
+        return UnicastData(client_id, feed, topic, content_type, data_packets)
 
     def write_body(self, writer: DataWriter) -> None:
         writer.write_uuid(self.client_id)
         writer.write_string(self.feed)
         writer.write_string(self.topic)
-        writer.write_boolean(self.is_image)
+        writer.write_string(self.content_type)
         writer.write_data_packet_array(self.data_packets)
 
     def __str__(self) -> str:
-        return 'UnicastData(client_id={},feed="{}",topic="{}",is_image={},data_packets={})'.format(
+        return 'UnicastData(client_id={},feed="{}",topic="{}",content_type={},data_packets={})'.format(
             self.client_id,
             self.feed,
             self.topic,
-            self.is_image,
+            self.content_type,
             self.data_packets
         )
 
@@ -222,7 +222,7 @@ class UnicastData(Message):
             self.client_id == value.client_id and
             self.feed == value.feed and
             self.topic == value.topic and
-            self.is_image == value.is_image and
+            self.content_type == value.content_type and
             self.data_packets == value.data_packets
         )
 
@@ -522,7 +522,7 @@ class ForwardedMulticastData(Message):
             host: str,
             feed: str,
             topic: str,
-            is_image: bool,
+            content_type: str,
             data_packets: Optional[List[DataPacket]]
     ) -> None:
         """Forwarded multicast data.
@@ -532,7 +532,7 @@ class ForwardedMulticastData(Message):
             host (str): The host from which the data was sent.
             feed (str): The feed name.
             topic (str): The topic name.
-            is_image (bool): True if the data is an image.
+            content_type (str): The type of the message contents.
             data_packets (Optional[List[DataPacket]]): The data packets.
         """
         super().__init__(MessageType.FORWARDED_MULTICAST_DATA)
@@ -540,7 +540,7 @@ class ForwardedMulticastData(Message):
         self.host = host
         self.feed = feed
         self.topic = topic
-        self.is_image = is_image
+        self.content_type = content_type
         self.data_packets = data_packets
 
     @classmethod
@@ -549,26 +549,26 @@ class ForwardedMulticastData(Message):
         host = await reader.read_string()
         feed = await reader.read_string()
         topic = await reader.read_string()
-        is_image = await reader.read_boolean()
+        content_type = await reader.read_string()
         data_packets = await reader.read_data_packet_array()
-        return ForwardedMulticastData(user, host, feed, topic, is_image, data_packets)
+        return ForwardedMulticastData(user, host, feed, topic, content_type, data_packets)
 
     def write_body(self, writer: DataWriter) -> None:
         writer.write_string(self.user)
         writer.write_string(self.host)
         writer.write_string(self.feed)
         writer.write_string(self.topic)
-        writer.write_boolean(self.is_image)
+        writer.write_string(self.content_type)
         writer.write_data_packet_array(self.data_packets)
 
     def __str__(self):
         # pylint: disable=line-too-long
-        return 'ForwardedMulticastData(user="{}",host="{}",feed="{}",topic="{}",is_image={},data_packets={}'.format(
+        return 'ForwardedMulticastData(user="{}",host="{}",feed="{}",topic="{}",content_type={},data_packets={}'.format(
             self.user,
             self.host,
             self.feed,
             self.topic,
-            self.is_image,
+            self.content_type,
             self.data_packets
         )
 
@@ -579,7 +579,7 @@ class ForwardedMulticastData(Message):
             self.host == value.host and
             self.feed == value.feed and
             self.topic == value.topic and
-            self.is_image == value.is_image and
+            self.content_type == value.content_type and
             self.data_packets == value.data_packets
         )
 
@@ -594,7 +594,7 @@ class ForwardedUnicastData(Message):
             client_id: UUID,
             feed: str,
             topic: str,
-            is_image: bool,
+            content_type: str,
             data_packets: Optional[List[DataPacket]]
     ) -> None:
         """A forwarded unicast message
@@ -605,7 +605,7 @@ class ForwardedUnicastData(Message):
             client_id (UUID): The client that sent the message.
             feed (str): The feed name.
             topic (str): The topic name.
-            is_image (bool): True if the data is considered an image.
+            content_type (str): The type of the message contents.
             data_packets (Optional[List[DataPacket]]): The data packets.
         """
         super().__init__(MessageType.FORWARDED_UNICAST_DATA)
@@ -614,7 +614,7 @@ class ForwardedUnicastData(Message):
         self.client_id = client_id
         self.feed = feed
         self.topic = topic
-        self.is_image = is_image
+        self.content_type = content_type
         self.data_packets = data_packets
 
     @classmethod
@@ -624,9 +624,9 @@ class ForwardedUnicastData(Message):
         client_id = await reader.read_uuid()
         feed = await reader.read_string()
         topic = await reader.read_string()
-        is_image = await reader.read_boolean()
+        content_type = await reader.read_string()
         data_packets = await reader.read_data_packet_array()
-        return ForwardedUnicastData(user, host, client_id, feed, topic, is_image, data_packets)
+        return ForwardedUnicastData(user, host, client_id, feed, topic, content_type, data_packets)
 
     def write_body(self, writer: DataWriter) -> None:
         writer.write_string(self.user)
@@ -634,18 +634,18 @@ class ForwardedUnicastData(Message):
         writer.write_uuid(self.client_id)
         writer.write_string(self.feed)
         writer.write_string(self.topic)
-        writer.write_boolean(self.is_image)
+        writer.write_string(self.content_type)
         writer.write_data_packet_array(self.data_packets)
 
     def __str__(self):
         # pylint: disable=line-too-long
-        return 'ForwardedUnicastData(user="{}",host="{}",client_id={},feed="{}",topic="{}",is_image={},data_packets={}'.format(
+        return 'ForwardedUnicastData(user="{}",host="{}",client_id={},feed="{}",topic="{}",content_type={},data_packets={}'.format(
             self.user,
             self.host,
             self.client_id,
             self.feed,
             self.topic,
-            self.is_image,
+            self.content_type,
             self.data_packets
         )
 
@@ -657,6 +657,6 @@ class ForwardedUnicastData(Message):
             self.client_id == value.client_id and
             self.feed == value.feed and
             self.topic == value.topic and
-            self.is_image == value.is_image and
+            self.content_type == value.content_type and
             self.data_packets == value.data_packets
         )

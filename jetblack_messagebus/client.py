@@ -9,6 +9,11 @@ from typing import Optional, Set, List, cast
 from ssl import SSLContext
 from uuid import UUID
 
+try:
+    from jetblack_negotiate_stream import open_negotiate_stream
+except ImportError:
+    pass
+
 from .io import DataReader, DataWriter, DataPacket
 from .messages import (
     MessageType,
@@ -23,7 +28,7 @@ from .messages import (
     ForwardedMulticastData,
     ForwardedUnicastData
 )
-from .authentication import Authenticator
+from .authentication import Authenticator, NullAuthenticator, SspiAuthenticator
 from .utils import read_aiter
 
 LOGGER = logging.getLogger(__name__)
@@ -69,8 +74,50 @@ class Client(metaclass=ABCMeta):
         Returns:
             Client: The connected client.
         """
+        if authenticator is None:
+            authenticator = NullAuthenticator()
+
         reader, writer = await asyncio.open_connection(host, port, ssl=ssl)
-        return cls(DataReader(reader), DataWriter(writer), authenticator, monitor_heartbeat)
+
+        return cls(
+            DataReader(reader),
+            DataWriter(writer),
+            authenticator,
+            monitor_heartbeat
+        )
+
+
+    @classmethod
+    async def create_sspi(
+            cls,
+            host: str,
+            port: int,
+            *,
+            authenticator: Optional[Authenticator] = None,
+            monitor_heartbeat: bool = False
+    ) -> Client:
+        """Create the client using SSPI authentication.
+
+        Args:
+            host (str): The host name of the distributor.
+            port (int): The distributor port
+            authenticator (Optional[Authenticator], optional): An authenticator. Defaults to None.
+            monitor_heartbeat (bool, optional): If true use the monitor heartbeat. Defaults to False.
+
+        Returns:
+            Client: The connected client.
+        """
+        if authenticator is None:
+            authenticator = SspiAuthenticator()
+
+        reader, writer = await open_negotiate_stream(host, port)
+
+        return cls(
+            DataReader(reader), # type: ignore
+            DataWriter(writer), # type: ignore
+            authenticator,
+            monitor_heartbeat
+        )
 
     async def start(self) -> None:
         """Start handling messages"""
@@ -150,7 +197,7 @@ class Client(metaclass=ABCMeta):
             message.feed,
             message.topic,
             message.data_packets,
-            message.is_image
+            message.content_type
         )
 
     async def _raise_unicast_data(
@@ -163,7 +210,7 @@ class Client(metaclass=ABCMeta):
             message.feed,
             message.topic,
             message.data_packets,
-            message.is_image
+            message.content_type
         )
 
     @abstractmethod
@@ -174,7 +221,7 @@ class Client(metaclass=ABCMeta):
             feed: str,
             topic: str,
             data_packets: Optional[List[DataPacket]],
-            is_image: bool
+            content_type: str
     ) -> None:
         """Called when data is received
 
@@ -184,7 +231,7 @@ class Client(metaclass=ABCMeta):
             feed (str): The feed name.
             topic (str): The topic name.
             data_packets (Optional[List[DataPacket]]): The data packets.
-            is_image (bool): True if the data is considered an image.
+            content_type (str): The type of the message contents.
         """
 
     async def _raise_forwarded_subscription_request(
@@ -260,7 +307,7 @@ class Client(metaclass=ABCMeta):
             self,
             feed: str,
             topic: str,
-            is_image: bool,
+            content_type: str,
             data_packets: Optional[List[DataPacket]]
     ) -> None:
         """Publish data to subscribers
@@ -268,14 +315,14 @@ class Client(metaclass=ABCMeta):
         Args:
             feed (str): The feed name.
             topic (str): The topic name.
-            is_image (bool): If true the data is considered an image.
+            content_type (str): The type of the message contents.
             data_packets (Optional[List[DataPacket]]): Th data packets.
         """
         await self._write_queue.put(
             MulticastData(
                 feed,
                 topic,
-                is_image,
+                content_type,
                 data_packets
             )
         )
@@ -285,7 +332,7 @@ class Client(metaclass=ABCMeta):
             client_id: UUID,
             feed: str,
             topic: str,
-            is_image: bool,
+            content_type: str,
             data_packets: Optional[List[DataPacket]]
     ) -> None:
         """Send data to a client
@@ -294,7 +341,7 @@ class Client(metaclass=ABCMeta):
             client_id (UUID): The clint id.
             feed (str): The feed name.
             topic (str): The topic name.
-            is_image (bool): If true the data is considered an image.
+            content_type (str): The type of the message contents.
             data_packets (Optional[List[DataPacket]]): Th data packets.
         """
         await self._write_queue.put(
@@ -302,7 +349,7 @@ class Client(metaclass=ABCMeta):
                 client_id,
                 feed,
                 topic,
-                is_image,
+                content_type,
                 data_packets
             )
         )
