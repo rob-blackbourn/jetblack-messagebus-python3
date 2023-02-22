@@ -13,10 +13,10 @@ async def on_data(
         feed: str,
         topic: str,
         data_packets: Optional[List[DataPacket]],
-        is_image: bool
+        content_type: str
 ) -> None:
     """Handle a data message"""
-    print(f'data: user="{user}",host="{host}",feed="{feed}",topic="{topic}",is_image={is_image}')
+    print(f'data: user="{user}",host="{host}",feed="{feed}",topic="{topic}",content_type={content_type}')
     if not data_packets:
         print("no data")
     else:

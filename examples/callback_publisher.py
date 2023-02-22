@@ -34,7 +34,7 @@ async def main():
                 else:
                     print(f'Publishing to feed "{feed}" and topic "{topic}" the message "{message}"')
                     data_packets = [DataPacket({ 42 }, message.encode('utf8'))]
-                    await client.publish(feed, topic, True, data_packets)
+                    await client.publish(feed, topic, "text/plain", data_packets)
                     console_task = asyncio.create_task(ainput('Message: '))
                     pending.add(console_task)
 

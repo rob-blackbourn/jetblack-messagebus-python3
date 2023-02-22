@@ -28,7 +28,7 @@ class SimpleSubscriber(Client):
             feed: str,
             topic: str,
             data_packets: Optional[List[DataPacket]],
-            is_image: bool
+            content_type: str
     ) -> None:
         print(f'data: user="{user}",host="{host}",feed="{feed}",topic="{topic}"')
         if not data_packets:
