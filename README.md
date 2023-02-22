@@ -19,8 +19,8 @@ import asyncio
 
 from jetblack_messagebus import CallbackClient
 
-async def on_data(user, host, feed, topic, data_packets, is_image):
-    print(f'data: user="{user}",host="{host}",feed="{feed}",topic="{topic}",is_image={is_image}')
+async def on_data(user, host, feed, topic, data_packets, content_type):
+    print(f'data: user="{user}",host="{host}",feed="{feed}",topic="{topic}",content_type={content_type}')
     if not data_packets:
         print("no data")
     else:
@@ -136,7 +136,7 @@ async def on_data(
         feed: str,
         topic: str,
         data_packets: Optional[List[DataPacket]],
-        is_image: bool
+        content_type: str
 ) -> None:
     """Called when data is received"""
     pass
